@@ -15,13 +15,20 @@ export class TranscriptStore {
   }
 
   getStudentIDs(name) {
+    // BUG-103: the query is normalized for comparison only. The stored
+    // studentName keeps the display form the student was entered with.
+    const query = name === undefined ? undefined : TranscriptStore.#searchKey(name);
     const matches = [];
     for (const student of this.#students.values()) {
-      if (name === undefined || student.studentName === String(name)) {
+      if (query === undefined || TranscriptStore.#searchKey(student.studentName) === query) {
         matches.push(student.studentID);
       }
     }
     return matches;
+  }
+
+  static #searchKey(name) {
+    return String(name).trim().toLowerCase();
   }
 
   getTranscript(studentID) {
