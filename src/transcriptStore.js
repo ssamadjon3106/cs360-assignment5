@@ -37,6 +37,9 @@ export class TranscriptStore {
     if (!this.#students.delete(parsedID)) {
       throw new Error(`Student not found: ${parsedID}`);
     }
+    // BUG-101: the grade map is keyed by student id, so it has to be cleared
+    // with the student. Otherwise the rows are orphaned and stay readable.
+    this.#grades.delete(parsedID);
   }
 
   addGrade(studentID, course, grade) {
