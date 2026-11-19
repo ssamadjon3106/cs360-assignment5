@@ -20,13 +20,20 @@ export class TranscriptStore {
   }
 
   getStudentIDs(name) {
+    // BUG-103: the query is normalized for comparison only. The stored
+    // studentName keeps the display form the student was entered with.
+    const query = name === undefined ? undefined : TranscriptStore.#searchKey(name);
     const matches = [];
     for (const student of this.#students.values()) {
-      if (name === undefined || student.studentName === String(name)) {
+      if (query === undefined || TranscriptStore.#searchKey(student.studentName) === query) {
         matches.push(student.studentID);
       }
     }
     return matches;
+  }
+
+  static #searchKey(name) {
+    return String(name).trim().toLowerCase();
   }
 
   getTranscript(studentID) {
@@ -53,6 +60,11 @@ export class TranscriptStore {
       normalizeCourseGrade(course, grade);
 
     const studentGrades = this.#grades.get(parsedID) ?? new Map();
+    // BUG-102: addGrade only inserts. Overwriting here silently destroyed the
+    // grade already on record; corrections must go through changeGrade.
+    if (studentGrades.has(normalizedCourse)) {
+      throw new Error(`Grade already exists for course ${normalizedCourse}`);
+    }
     studentGrades.set(normalizedCourse, numericGrade);
     this.#grades.set(parsedID, studentGrades);
     return { studentID: parsedID, course: normalizedCourse, grade: numericGrade };
