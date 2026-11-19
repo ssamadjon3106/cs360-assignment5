@@ -20,8 +20,7 @@ export class TranscriptStore {
   }
 
   getStudentIDs(name) {
-    // BUG-103: the query is normalized for comparison only. The stored
-    // studentName keeps the display form the student was entered with.
+    // This is only used for comparing. The name we store does not change.
     const query = name === undefined ? undefined : TranscriptStore.#searchKey(name);
     const matches = [];
     for (const student of this.#students.values()) {
@@ -49,8 +48,7 @@ export class TranscriptStore {
     if (!this.#students.delete(parsedID)) {
       throw new Error(`Student not found: ${parsedID}`);
     }
-    // BUG-101: the grade map is keyed by student id, so it has to be cleared
-    // with the student. Otherwise the rows are orphaned and stay readable.
+    // The grades use the same id as the key, so delete them too.
     this.#grades.delete(parsedID);
   }
 
@@ -60,8 +58,7 @@ export class TranscriptStore {
       normalizeCourseGrade(course, grade);
 
     const studentGrades = this.#grades.get(parsedID) ?? new Map();
-    // BUG-102: addGrade only inserts. Overwriting here silently destroyed the
-    // grade already on record; corrections must go through changeGrade.
+    // addGrade should only add. To change a grade, changeGrade is used.
     if (studentGrades.has(normalizedCourse)) {
       throw new Error(`Grade already exists for course ${normalizedCourse}`);
     }

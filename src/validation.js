@@ -1,19 +1,11 @@
-/**
- * REF-201: single home for the course and grade validation rules that were
- * duplicated across TranscriptStore.addGrade, changeGrade and getGrade.
- *
- * These helpers are deliberately pure and free of store state so that every
- * caller normalizes and rejects input identically. Messages are part of the
- * public contract: src/server.js maps them to HTTP status codes.
- */
+// Shared checks for course names and grades (REF-201).
+// Before this, addGrade and changeGrade had the same code twice and getGrade
+// repeated the course part a third time.
 
 export const MIN_GRADE = 0;
 export const MAX_GRADE = 100;
 
-/**
- * Normalize a course name to its canonical stored form.
- * @throws {Error} "Course name is required" when the name is blank.
- */
+// Makes the course name upper case, and throws if it is empty.
 export function normalizeCourse(course) {
   const normalizedCourse = String(course ?? "").trim().toUpperCase();
   if (!normalizedCourse) {
@@ -22,18 +14,13 @@ export function normalizeCourse(course) {
   return normalizedCourse;
 }
 
-/**
- * Normalize a course name for lookups, without rejecting a blank name.
- * A read of an unknown course is a miss, not an input error.
- */
+// Same thing but for reading a grade. Here an empty or unknown course is just
+// not found, so it should not throw an error.
 export function normalizeCourseForLookup(course) {
   return String(course ?? "").trim().toUpperCase();
 }
 
-/**
- * Coerce a grade to an integer within the allowed range.
- * @throws {Error} "Grade must be an integer from 0 to 100" when out of range.
- */
+// Checks that the grade is a whole number between 0 and 100.
 export function normalizeGrade(grade) {
   const numericGrade = Number(grade);
   if (
@@ -48,9 +35,7 @@ export function normalizeGrade(grade) {
   return numericGrade;
 }
 
-/**
- * Validate the course/grade pair that addGrade and changeGrade both take.
- */
+// addGrade and changeGrade both need the course and the grade checked.
 export function normalizeCourseGrade(course, grade) {
   return {
     course: normalizeCourse(course),
